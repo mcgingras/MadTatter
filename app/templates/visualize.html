@@ -1,0 +1,168 @@
+<html>
+  <head>
+    <title>Mad Tatter</title>
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,700" rel="stylesheet">
+    <script src="http://d3js.org/d3.v4.min.js" charset="utf-8"></script>
+    <link href="/static/css/style.css" rel="stylesheet">
+  </head>
+  <body>
+      <marquee class="marquee" behavior="scroll" direction="left">Visualize. Visualize. Visualize. Visualize. Visualize. Visualize. Visualize. Visualize. Visualize. Visualize. Visualize. Visualize. Visualize. Visualize. Visualize. Visualize. Visualize. Visualize. Visualize. Visualize.</marquee>
+      <div class="flex">
+        <div class="row3-4 border font-lg textbox">
+          <div id="plot"></div>
+        </div>
+        <div class="row1-4 flex flex-c border" style="border-left: none;">
+          instructions
+        </div>
+      </div>
+
+    <script>
+
+    var height = 700;
+    var width = 700;
+    var padding = 30;
+
+    var px = 100;
+    var py = 0;
+    var MM_PER_SEGMENT = 50;
+
+    var svg = d3.select("#plot").append("svg")
+    .attr("height", height)
+    .attr("width", width);
+
+    var xScale = d3.scaleLinear().domain([0, 400]).range([0, width]);
+    var yScale = d3.scaleLinear().domain([0, 400]).range([height, 0]);
+
+    var xAxis = d3.axisBottom().scale(xScale);
+    svg.append("g")
+      .attr("class", "axis")
+      .attr("transform", "translate(0, " + (height-25) + ")")
+      .call(xAxis);
+
+    var yAxis = d3.axisLeft().scale(yScale);
+    svg.append("g")
+            .attr("class", "axis")
+            .attr("transform", "translate(" + (width / 12) + ", 0)")
+            .call(yAxis);
+
+    var xScale2 = d3.scaleLinear().domain([0, .5]).range([0, width]);
+    var yScale2 = d3.scaleLinear().domain([0, .5]).range([height, 0]);
+
+
+    function atan3(dy,dx) {
+      var a = Math.atan2(dy,dx);
+      if(a<0) a = (Math.PI*2.0)+a;
+      return a;
+    }
+
+    function arc(x,y,cx,cy,dir){
+      // get radius
+      var dx = px - cx;
+      var dy = py - cy;
+      var radius=Math.sqrt(dx*dx+dy*dy);
+
+      // find angle of arc (sweep)
+      var angle1=atan3(dy,dx);
+      var angle2=atan3(y-cy,x-cx);
+      var theta=angle2-angle1;
+
+      if(dir>0 && theta<0) angle2+=2*Math.PI;
+      else if(dir<0 && theta>0) angle1+=2*Math.PI;
+
+      theta=angle2-angle1;
+      // get length of arc
+      var len      = Math.abs(theta) * radius;
+      var i        = Math.ceil( len * MM_PER_SEGMENT );
+      var segments = Math.ceil( len * MM_PER_SEGMENT );
+
+      var nx, ny, angle3, scale;
+
+      for(i=0;i<segments;++i) {
+        // interpolate around the arc
+        scale = (i)/(segments);
+
+        angle3 = ( theta * scale ) + angle1;
+        nx = cx + Math.cos(angle3) * radius;
+        ny = cy + Math.sin(angle3) * radius;
+        // send it to the planner
+        line(nx,ny);
+        px = nx;
+        py = ny;
+      }
+
+      line(x,y);
+
+    }
+
+    function line(newx,newy) {
+      var i;
+      var over = 0;
+
+      var dx  = newx-px;
+      var dy  = newy-py;
+      var dirx = dx>0?1:-1;
+      var diry = dy>0?1:-1;
+      dx = Math.abs(dx);
+      dy = Math.abs(dy);
+
+
+      if(dx>dy) {
+        over = dx/2;
+        for(i=0; i<dx; ++i) {
+          svg.append('line')
+          .attr('x1', xScale(px))
+          .attr('x2', xScale(px+dirx))
+          .attr('y1', yScale(py))
+          .attr('y2', yScale(py))
+          .attr('stroke-width', 1)
+          .attr('stroke', 'black');
+          px += dirx;
+          over += dy;
+          if(over>=dx) {
+            over -= dx;
+            svg.append('line')
+            .attr('x1', xScale(px))
+            .attr('x2', xScale(px))
+            .attr('y1', yScale(py))
+            .attr('y2', yScale(py+diry))
+            .attr('stroke-width', 1)
+            .attr('stroke', 'black');
+            py += diry;
+          }
+        }
+      } else {
+        over = dy/2;
+        for(i=0; i<dy; ++i) {
+          svg.append('line')
+          .attr('x1', xScale(px))
+          .attr('x2', xScale(px))
+          .attr('y1', yScale(py))
+          .attr('y2', yScale(py+diry))
+          .attr('stroke-width', 1)
+          .attr('stroke', 'black');
+          py += diry;
+          over += dx;
+          if(over >= dy) {
+            over -= dy;
+            svg.append('line')
+            .attr('x1', xScale(px))
+            .attr('x2', xScale(px+dirx))
+            .attr('y1', yScale(py))
+            .attr('y2', yScale(py))
+            .attr('stroke-width', 1)
+            .attr('stroke', 'black');
+            px += dirx;
+          }
+        }
+      }
+
+      px = newx;
+      py = newy;
+    }
+
+    arc(100,200,100,100,1);
+
+    </script>
+
+  </body>
+</html>
