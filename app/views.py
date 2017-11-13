@@ -15,6 +15,7 @@ def draw():
 
 @app.route('/tattoo')
 def tat():
+    #this is where we would maybe want to call svg-gcode
     return render_template('tattoo.html')
 
 @app.route('/submissions')
