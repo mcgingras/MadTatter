@@ -23,6 +23,13 @@ a:hover{
   justify-content: space-between;
 }
 
+.flex-v{
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+
 .bold{ font-weight: 700; }
 .font-lg{ font-size: 42px; }
 .font-sm{ font-size: 14px; }
@@ -34,6 +41,11 @@ a:hover{
 
 .row3-4{
   width: 75%;
+  height: 100%;
+}
+
+.row4-4{
+  width: 100%;
   height: 100%;
 }
 
@@ -57,13 +69,22 @@ a:hover{
   border-top: 4px solid black;
   border-bottom: 4px solid black;
   background-color: white;
-  margin-bottom: 45px;
   padding: 15px;
   font-size: 36px;
-  position: absolute;
-  top: 0;
+  flex: 0 1 auto;
 }
 
 .axis{
   stroke-width: 4px;
 }
+
+.player{
+  height: 100%;
+  width: 100%;
+}
+
+.player-inactive{
+  background-color: #000;
+}
+
+.not-live{ text-decoration: line-through; }
