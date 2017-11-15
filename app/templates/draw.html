@@ -2,7 +2,8 @@
   <head>
     <title>Mad Tatter</title>
     <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,700" rel="stylesheet">
-    <script src="http://d3js.org/d3.v4.min.js" charset="utf-8"></script>
+    <script src="http://d3js.org/d3.v3.min.js"></script>
+    <script src="/static/js/simplify.js"></script>
     <link href="/static/css/style.css" rel="stylesheet">
   </head>
   <body>
@@ -11,7 +12,8 @@
       <marquee class="marquee" behavior="scroll" direction="left">Draw! Draw! Draw! Draw! Draw! Draw! Draw! Draw! Draw! Draw! Draw! Draw! Draw! Draw! Draw! Draw! Draw! Draw! Draw! Draw!</marquee>
       <div class="flex">
         <div class="row3-4 border font-lg textbox">
-          <canvas id="svgCanvas"></canvas>
+          <div id="sketch"></div>
+          <div id="output"></div>
         </div>
         <div class="row1-4 flex flex-c border" style="border-left: none;">
           instructions
@@ -19,6 +21,6 @@
       </div>
     </div>
 
-  <script src="../js/svgpaint.js" charset="utf-8"></script>
+  <script src="/static/js/svgpaint.js" charset="utf-8"></script>
   </body>
 </html>

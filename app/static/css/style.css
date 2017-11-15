@@ -1,3 +1,24 @@
+svg {
+  background: #ddd;
+  font: 10px sans-serif;
+  cursor: url('/static/img/crayon.png'), auto;
+}
+
+.line {
+  cursor: url('/static/img/crayon.png'), auto;
+  fill: none;
+  stroke: #000;
+  stroke-width: 2px;
+  stroke-linejoin: round;
+}
+#output {
+  position: relative;
+  top: -2em;
+  left: 0.67em;
+  font: 12px/1.4 monospace;
+}
+
+
 *{
   margin: 0;
   padding: 0;
