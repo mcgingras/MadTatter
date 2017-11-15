@@ -74,7 +74,7 @@
 
     var px = 100;
     var py = 0;
-    var MM_PER_SEGMENT = 50;
+    var MM_PER_SEGMENT = 1;
 
     var svg = d3.select("#plot").append("svg")
     .attr("height", height)
@@ -111,7 +111,6 @@
       theta=angle2-angle1;
       // get length of arc
       var len      = Math.abs(theta) * radius;
-      var i        = Math.ceil( len * MM_PER_SEGMENT );
       var segments = Math.ceil( len * MM_PER_SEGMENT );
 
       var nx, ny, angle3, scale;
@@ -119,12 +118,16 @@
       for(i=0;i<segments;++i) {
         // interpolate around the arc
         scale = (i)/(segments);
+        console.log('does this get written');
 
         angle3 = ( theta * scale ) + angle1;
         nx = cx + Math.cos(angle3) * radius;
         ny = cy + Math.sin(angle3) * radius;
         // send it to the planner
         line(nx,ny);
+
+        console.log(px);
+        console.log(py);
         px = nx;
         py = ny;
       }
@@ -199,7 +202,7 @@
       py = newy;
     }
 
-    arc(100,200,100,100,1);
+    arc(100,0,50,0,1);
 
     </script>
 

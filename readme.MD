@@ -13,10 +13,11 @@ div align="center">
 <br />
 
 
-
 <div align="center">
   <sub>An INFO 4320 project @ Cornell University. Built by
   <a href="https://github.com/mcgingras">Michael Gingras</a>
+  <a href="#">Andrew Grossfeld</a> and
+  <a href="#">Anna Kamphampaty</a>
 </div>
 
 ## Table of Contents
