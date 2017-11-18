@@ -3,9 +3,14 @@
 // draw your own SVG!
 // Michael Gingras
 // ---------------------------------------------------------------------------
+
+parentDiv = document.getElementById('parent');
 var margin = {top: 0, right: 0, bottom: 0, left: 0},
     width = 960 - margin.left - margin.right,
     height = 500 - margin.top - margin.bottom;
+
+var width = parentDiv.clientWidth;
+var height = parentDiv.clientHeight;
 // var npoints = 100;
 var ptdata = [];
 var session = [];
