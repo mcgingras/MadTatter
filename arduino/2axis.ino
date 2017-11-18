@@ -54,14 +54,21 @@ const int step_pin_x = D1;
 const int dir_pin_x  = D0;
 const int step_pin_y = A1;
 const int dir_pin_y  = A0;
-const int lim_min_y  = A2;
-const int lim_min_x  = A3;
+const int lim_pin_x  = A2;
+const int lim_pin_y  = A3;
 
 
 //------------------------------------------------------------------------------
 // METHODS
 //------------------------------------------------------------------------------
 
+
+void home(){
+  while(digitalRead(lim_pin_x) == LOW){
+    xmstep(-1);
+  }
+  position(0,0);
+}
 
 /**
  * delay for the appropriate number of microseconds
@@ -98,16 +105,6 @@ void feedrate(float nfr) {
   }
   step_delay = 1000000.0/nfr;
   fr = nfr;
-}
-
-/**
- * send penhead back to true, 0,0
- */
-void home(){
-  Serial.println("we are headed home...");
-  while(digitalRead(lim_min_y)){ ymstep(-1); }
-  while(digitalRead(lim_min_x)){ xmstep(-1); }
-  position(0,0); //setting logical position back to 0.
 }
 
 
@@ -377,13 +374,11 @@ void setup() {
   pinMode(dir_pin_x, OUTPUT);
   pinMode(step_pin_y, OUTPUT);
   pinMode(dir_pin_y, OUTPUT);
-  pinMode(lim_min_x, INPUT);
-  pinMode(lim_min_y, INPUT);
+  pinMode(lim_pin_x, INPUT);
+  pinMode(lim_pin_y, INPUT);
 
   position(0,0);  // set staring position... add this in when we have limiters
-  feedrate((MAX_FEEDRATE + MIN_FEEDRATE)/2);  // not sure what this even does
 
-  Serial.println("begin...")
   home();
   help();  // say hello
   ready();
