@@ -1,11 +1,36 @@
 //------------------------------------------------------------------------------
 // 2 Axis CNC Controller
 // T20 for Mad Tatter
-// Michael Gingras, Andrew Grossfeld, Anna Kamphampaty
 // Modification of marginallycelver's demo.
+//
+//
+// TODO:
+// - add limiters
+// - verify arc and line working
+// - z axis
+// - TCP protocol
 //------------------------------------------------------------------------------
 
-#include "config.h"
+// ~~ Note: I've disabled all of the feedrate stuff bc I am not sure what it is.
+
+#include "math.h"
+
+//------------------------------------------------------------------------------
+// CONFIG
+// some of these I didn't use, but came from library. Might need later?
+//------------------------------------------------------------------------------
+
+#define VERSION        (1)      // firmware version
+#define BAUD           (9600)  // How fast is the Arduino talking?
+#define MAX_BUF        (64)     // What is the longest message Arduino can store?
+#define STEPS_PER_TURN (400)    // depends on your stepper motor.  most are 200.
+#define MIN_STEP_DELAY (50.0)
+#define MAX_FEEDRATE   (1000000.0/MIN_STEP_DELAY)
+#define MIN_FEEDRATE   (0.01)
+
+// for arc directions
+#define ARC_CW           (1)
+#define ARC_CCW         (-1)
 
 //------------------------------------------------------------------------------
 // GLOBALS
@@ -17,16 +42,20 @@ float px, py;           // location
 
 // speeds
 float fr =     0;       // human version
-long  step_delay;       // machine version
+long  step_delay = 10;       // machine version
+const int delay_between_steps_microsec = 10000;
+int MM_PER_SEGMENT = 1;
 
 // settings
 char mode_abs=1;        // absolute mode?
 
 // pins
-const int step_pin_x = A1;
-const int dir_pin_x  = A0;
-const int step_pin_y = D1;
-const int dir_pin_y  = D0;
+const int step_pin_x = D1;
+const int dir_pin_x  = D0;
+const int step_pin_y = A1;
+const int dir_pin_y  = A0;
+const int lim_pin_x  = A2;
+const int lim_pin_y  = A3;
 
 
 //------------------------------------------------------------------------------
@@ -34,15 +63,49 @@ const int dir_pin_y  = D0;
 //------------------------------------------------------------------------------
 
 
+void home(){
+  while(digitalRead(lim_pin_x) == LOW){
+    xmstep(-1);
+  }
+  position(0,0);
+}
+
 /**
  * delay for the appropriate number of microseconds
  * @input ms how many milliseconds to wait
  */
 void pause(long ms) {
   delay(ms/1000);
-  delayMicroseconds(ms%1000);
+  delayMicroseconds(ms%1000);  // delayMicroseconds doesn't work for values > ~16k.
 }
 
+/**
+ * Disables the motors
+ */
+void disable() {
+  digitalWrite(step_pin_x, LOW);
+  digitalWrite(step_pin_y, LOW);
+}
+
+
+/**
+ * Set the feedrate (speed motors will move)
+ * @input nfr the new speed in steps/second
+ */
+void feedrate(float nfr) {
+  if(fr==nfr) return;  // same as last time?  quit now.
+
+  if(nfr>MAX_FEEDRATE || nfr<MIN_FEEDRATE) {  // don't allow crazy feed rates
+    Serial.print(F("New feedrate must be greater than "));
+    Serial.print(MIN_FEEDRATE);
+    Serial.print(F("steps/s and less than "));
+    Serial.print(MAX_FEEDRATE);
+    Serial.println(F("steps/s."));
+    return;
+  }
+  step_delay = 1000000.0/nfr;
+  fr = nfr;
+}
 
 
 /**
@@ -51,6 +114,7 @@ void pause(long ms) {
  * @input npy new position y
  */
 void position(float npx,float npy) {
+  // here is a good place to add sanity tests
   px=npx;
   py=npy;
 }
@@ -58,17 +122,31 @@ void position(float npx,float npy) {
 /**
  * Steps the x axis motors
  */
-void xmstep(){
+void xmstep(int dirx){
+  if(dirx > 0){
+    digitalWrite(dir_pin_x, HIGH);
+  }
+  else{
+    digitalWrite(dir_pin_x, LOW);
+  }
   digitalWrite(step_pin_x, HIGH);
   digitalWrite(step_pin_x, LOW);
+  delayMicroseconds(delay_between_steps_microsec);
 }
 
 /**
  * Steps the y axis motors
  */
-void ymstep(){
+void ymstep(int diry){
+  if(diry > 0){
+    digitalWrite(dir_pin_y, HIGH);
+  }
+  else{
+    digitalWrite(dir_pin_y, LOW);
+  }
   digitalWrite(step_pin_y, HIGH);
   digitalWrite(step_pin_y, LOW);
+  delayMicroseconds(delay_between_steps_microsec);
 }
 
 /**
@@ -83,7 +161,7 @@ void line(float newx,float newy) {
   float dx  = newx-px;
   float dy  = newy-py;
   int dirx = dx>0?1:-1;
-  int diry = dy>0?-1:1;
+  int diry = dy>0?1:-1;
   dx = abs(dx);
   dy = abs(dy);
 
@@ -101,11 +179,11 @@ void line(float newx,float newy) {
   } else {
     over = dy/2;
     for(i=0; i<dy; ++i) {
-      xmstep(diry);
+      ymstep(diry);
       over += dx;
       if(over >= dy) {
         over -= dy;
-        ymstep(dirx);
+        xmstep(dirx);
       }
       pause(step_delay);
     }
@@ -115,6 +193,8 @@ void line(float newx,float newy) {
   py = newy;
 }
 
+
+// returns angle of dy/dx as a value from 0...2PI
 float atan3(float dy,float dx) {
   float a = atan2(dy,dx);
   if(a<0) a = (PI*2.0)+a;
@@ -128,31 +208,39 @@ float atan3(float dy,float dx) {
 // cx/cy - center of circle
 // x/y - end position
 // dir - ARC_CW or ARC_CCW to control direction of arc
-void arc(float cx,float cy,float x,float y,float dir) {
+void arc(float x,float y,float cx,float cy,float dir) {
   // get radius
   float dx = px - cx;
   float dy = py - cy;
   float radius=sqrt(dx*dx+dy*dy);
 
+  // find angle of arc (sweep)
   float angle1=atan3(dy,dx);
   float angle2=atan3(y-cy,x-cx);
   float theta=angle2-angle1;
+
+  Serial.println(angle1);
+  Serial.println(angle2);
 
   if(dir>0 && theta<0) angle2+=2*PI;
   else if(dir<0 && theta>0) angle1+=2*PI;
 
   theta=angle2-angle1;
+
   float len = abs(theta) * radius;
 
-  int i, segments = ceil( len * MM_PER_SEGMENT );
-
+  float i, segments = ceil( len / MM_PER_SEGMENT );
   float nx, ny, angle3, scale;
 
   for(i=0;i<segments;++i) {
-    scale = ((float)i)/((float)segments);
+    // interpolate around the arc
+    scale = (i)/(segments);
+
     angle3 = ( theta * scale ) + angle1;
     nx = cx + cos(angle3) * radius;
     ny = cy + sin(angle3) * radius;
+
+    // send it to the planner
     line(nx,ny);
   }
 
@@ -167,14 +255,14 @@ void arc(float cx,float cy,float x,float y,float dir) {
  * @input val the return value if /code/ is not found.
  **/
 float parseNumber(char code,float val) {
-  char *ptr=serialBuffer;
-  while((long)ptr > 1 && (*ptr) && (long)ptr < (long)serialBuffer+sofar) {
-    if(*ptr==code) {
-      return atof(ptr+1);
+  char *ptr=buffer;  // start at the beginning of buffer
+  while((long)ptr > 1 && (*ptr) && (long)ptr < (long)buffer+sofar) {  // walk to the end
+    if(*ptr==code) {  // if you find code on your walk,
+      return atof(ptr+1);  // convert the digits that follow into a float and return it
     }
-    ptr=strchr(ptr,' ')+1;
+    ptr=strchr(ptr,' ')+1;  // take a step from here to the letter after the next space
   }
-  return val;
+  return val;  // end reached, nothing found, return default val.
 }
 
 
@@ -195,7 +283,7 @@ void output(const char *code,float val) {
 void where() {
   output("X",px);
   output("Y",py);
-  output("F",fr);
+  // output("F",fr);
   Serial.println(mode_abs?"ABS":"REL");
 }
 
@@ -204,7 +292,7 @@ void where() {
  * display helpful information
  */
 void help() {
-  Serial.print(F("GcodeCNCDemo2AxisV1 "));
+  Serial.print(F("THE MAD TATTER version "));
   Serial.println(VERSION);
   Serial.println(F("Commands:"));
   Serial.println(F("G00 [X(steps)] [Y(steps)] [F(feedrate)]; - line"));
@@ -226,36 +314,36 @@ void help() {
  * Read the input buffer and find any recognized commands.  One G or M command per line.
  */
 void processCommand() {
-  int cmd = parsenumber('G',-1);
+  int cmd = parseNumber('G',-1);
   switch(cmd) {
   case  0:
   case  1: { // line
-    feedrate(parsenumber('F',fr));
-    line( parsenumber('X',(mode_abs?px:0)) + (mode_abs?0:px),
-          parsenumber('Y',(mode_abs?py:0)) + (mode_abs?0:py) );
+    feedrate(parseNumber('F',fr));
+    line( parseNumber('X',(mode_abs?px:0)) + (mode_abs?0:px),
+          parseNumber('Y',(mode_abs?py:0)) + (mode_abs?0:py) );
     break;
     }
   case 2:
   case 3: {  // arc
-      feedrate(parsenumber('F',fr));
-      arc(parsenumber('I',(mode_abs?px:0)) + (mode_abs?0:px),
-          parsenumber('J',(mode_abs?py:0)) + (mode_abs?0:py),
-          parsenumber('X',(mode_abs?px:0)) + (mode_abs?0:px),
-          parsenumber('Y',(mode_abs?py:0)) + (mode_abs?0:py),
+      feedrate(parseNumber('F',fr));
+      arc(parseNumber('X',(mode_abs?px:0)) + (mode_abs?0:px),
+          parseNumber('Y',(mode_abs?py:0)) + (mode_abs?0:py),
+          parseNumber('I',(mode_abs?px:0)) + (mode_abs?0:px),
+          parseNumber('J',(mode_abs?py:0)) + (mode_abs?0:py),
           (cmd==2) ? -1 : 1);
       break;
     }
-  case  4:  pause(parsenumber('P',0)*1000);  break;  // dwell
+  case  4:  pause(parseNumber('P',0)*1000);  break;  // dwell
   case 90:  mode_abs=1;  break;  // absolute mode
   case 91:  mode_abs=0;  break;  // relative mode
   case 92:  // set logical position
-    position( parsenumber('X',0),
-              parsenumber('Y',0) );
+    position( parseNumber('X',0),
+              parseNumber('Y',0) );
     break;
   default:  break;
   }
 
-  cmd = parsenumber('M',-1);
+  cmd = parseNumber('M',-1);
   switch(cmd) {
   case 18:  // disable motors
     disable();
@@ -280,16 +368,19 @@ void ready() {
  * First thing this machine does on startup.  Runs only once.
  */
 void setup() {
-  Serial.begin(BAUD);
+  Serial.begin(BAUD);  // open coms
 
   pinMode(step_pin_x, OUTPUT);
   pinMode(dir_pin_x, OUTPUT);
   pinMode(step_pin_y, OUTPUT);
   pinMode(dir_pin_y, OUTPUT);
+  pinMode(lim_pin_x, INPUT);
+  pinMode(lim_pin_y, INPUT);
 
-  // position(0,0);  // set staring position... add this in when we have limiters
+  position(0,0);  // set staring position... add this in when we have limiters
 
-  help();
+  home();
+  help();  // say hello
   ready();
 }
 
@@ -298,14 +389,16 @@ void setup() {
  * After setup() this machine will repeat loop() forever.
  */
 void loop() {
-  while(Serial.available() > 0) {
-    char c=Serial.read();
-    Serial.print(c); 
-    if(sofar<MAX_BUF-1) buffer[sofar++]=c;
+  // listen for serial commands
+  while(Serial.available() > 0) {  // if something is available
+    char c=Serial.read();  // get it
+    Serial.print(c);  // repeat it back so I know you got the message
+    if(sofar<MAX_BUF-1) buffer[sofar++]=c;  // store it
     if((c=='\n') || (c == '\r')) {
-      buffer[sofar]=0;
-      Serial.print(F("\r\n"));
-      processCommand();
+      // entire message received
+      buffer[sofar]=0;  // end the buffer so string functions work right
+      Serial.print(F("\r\n"));  // echo a return character for humans
+      processCommand();  // do something with the command
       ready();
     }
   }
