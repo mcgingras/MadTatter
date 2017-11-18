@@ -1,4 +1,4 @@
-svg {
+#sketch {
   background: #ddd;
   font: 10px sans-serif;
   cursor: url('/static/img/crayon.png'), auto;
@@ -8,7 +8,7 @@ svg {
   cursor: url('/static/img/crayon.png'), auto;
   fill: none;
   stroke: #000;
-  stroke-width: 2px;
+  stroke-width: 4px;
   stroke-linejoin: round;
 }
 #output {
@@ -89,8 +89,6 @@ a:hover{
 }
 
 .marquee{
-  border-top: 4px solid black;
-  border-bottom: 4px solid black;
   background-color: white;
   padding: 15px;
   font-size: 36px;
@@ -99,6 +97,12 @@ a:hover{
 
 .axis{
   stroke-width: 4px;
+}
+
+.plot{
+  position: absolute;
+  top: 0;
+  left: 0;
 }
 
 .player{

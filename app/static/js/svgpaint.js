@@ -66,18 +66,14 @@ function ignore () {
   before = ptdata.length;
   console.group('Line Simplification');
   console.log("Before simplification:", before)
-
-  // simplify
   ptdata = simplify(ptdata);
   after = ptdata.length;
   console.log("After simplification:", ptdata.length)
   console.groupEnd();
   var percentage = parseInt(100 - (after/before)*100, 10);
   output.html('Points: ' + before + ' => ' + after + '. <b>' + percentage + '% simplification.</b>');
-  // add newly created line to the drawing session
   session.push(ptdata);
 
-  // redraw the line after simplification
   tick();
 }
 function onmove (e) {
@@ -87,14 +83,12 @@ function onmove (e) {
     point = d3.mouse(this);
     output.text('event: ' + type + ': ' + d3.mouse(this));
   } else {
-    // only deal with a single touch input
     point = d3.touches(this)[0];
     output.text('event: ' + type + ': ' + d3.touches(this)[0]);
   }
-  // push a new data point onto the back
   ptdata.push({ x: point[0], y: point[1] });
   tick();
 }
 function tick() {
-  path.attr("d", function(d) { return line(d); }) // Redraw the path:
+  path.attr("d", function(d) { return line(d); })
 }

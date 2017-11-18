@@ -1,7 +1,7 @@
 <h1 align="center">The Mad Tatter</h1>
 
 <div align="center">
-<img src="static/t20.svg" />
+<img src="app/static/t20.svg" />
 </div>
 
 <div align="center">
@@ -12,7 +12,6 @@
 </div>
 
 <br />
-
 
 <div align="center">
   <sub>An INFO 4320 project @ Cornell University. Built by

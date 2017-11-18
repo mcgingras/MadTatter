@@ -1,6 +1,7 @@
 //------------------------------------------------------------------------------
 // 2 Axis CNC Controller
 // T20 for Mad Tatter
+// Michael Gingras, Andrew Grossfeld, Anna Kamphampaty
 // Modification of marginallycelver's demo.
 //------------------------------------------------------------------------------
 
@@ -39,28 +40,9 @@ const int dir_pin_y  = D0;
  */
 void pause(long ms) {
   delay(ms/1000);
-  delayMicroseconds(ms%1000);  // delayMicroseconds doesn't work for values > ~16k.
+  delayMicroseconds(ms%1000);
 }
 
-
-/**
- * Set the feedrate (speed motors will move)
- * @input nfr the new speed in steps/second
- */
-// void feedrate(float nfr) {
-//   if(fr==nfr) return;  // same as last time?  quit now.
-//
-//   if(nfr>MAX_FEEDRATE || nfr<MIN_FEEDRATE) {  // don't allow crazy feed rates
-//     Serial.print(F("New feedrate must be greater than "));
-//     Serial.print(MIN_FEEDRATE);
-//     Serial.print(F("steps/s and less than "));
-//     Serial.print(MAX_FEEDRATE);
-//     Serial.println(F("steps/s."));
-//     return;
-//   }
-//   step_delay = 1000000.0/nfr;
-//   fr = nfr;
-// }
 
 
 /**
@@ -69,7 +51,6 @@ void pause(long ms) {
  * @input npy new position y
  */
 void position(float npx,float npy) {
-  // here is a good place to add sanity tests
   px=npx;
   py=npy;
 }
@@ -102,7 +83,7 @@ void line(float newx,float newy) {
   float dx  = newx-px;
   float dy  = newy-py;
   int dirx = dx>0?1:-1;
-  int diry = dy>0?-1:1;  // because the motors are mounted in opposite directions
+  int diry = dy>0?-1:1;
   dx = abs(dx);
   dy = abs(dy);
 
@@ -134,8 +115,6 @@ void line(float newx,float newy) {
   py = newy;
 }
 
-
-// returns angle of dy/dx as a value from 0...2PI
 float atan3(float dy,float dx) {
   float a = atan2(dy,dx);
   if(a<0) a = (PI*2.0)+a;
@@ -155,7 +134,6 @@ void arc(float cx,float cy,float x,float y,float dir) {
   float dy = py - cy;
   float radius=sqrt(dx*dx+dy*dy);
 
-  // find angle of arc (sweep)
   float angle1=atan3(dy,dx);
   float angle2=atan3(y-cy,x-cx);
   float theta=angle2-angle1;
@@ -164,11 +142,6 @@ void arc(float cx,float cy,float x,float y,float dir) {
   else if(dir<0 && theta>0) angle1+=2*PI;
 
   theta=angle2-angle1;
-
-  // get length of arc
-  // float circ=PI*2.0*radius;
-  // float len=theta*circ/(PI*2.0);
-  // simplifies to
   float len = abs(theta) * radius;
 
   int i, segments = ceil( len * MM_PER_SEGMENT );
@@ -176,13 +149,10 @@ void arc(float cx,float cy,float x,float y,float dir) {
   float nx, ny, angle3, scale;
 
   for(i=0;i<segments;++i) {
-    // interpolate around the arc
     scale = ((float)i)/((float)segments);
-
     angle3 = ( theta * scale ) + angle1;
     nx = cx + cos(angle3) * radius;
     ny = cy + sin(angle3) * radius;
-    // send it to the planner
     line(nx,ny);
   }
 
@@ -197,14 +167,14 @@ void arc(float cx,float cy,float x,float y,float dir) {
  * @input val the return value if /code/ is not found.
  **/
 float parseNumber(char code,float val) {
-  char *ptr=serialBuffer;  // start at the beginning of buffer
-  while((long)ptr > 1 && (*ptr) && (long)ptr < (long)serialBuffer+sofar) {  // walk to the end
-    if(*ptr==code) {  // if you find code on your walk,
-      return atof(ptr+1);  // convert the digits that follow into a float and return it
+  char *ptr=serialBuffer;
+  while((long)ptr > 1 && (*ptr) && (long)ptr < (long)serialBuffer+sofar) {
+    if(*ptr==code) {
+      return atof(ptr+1);
     }
-    ptr=strchr(ptr,' ')+1;  // take a step from here to the letter after the next space
+    ptr=strchr(ptr,' ')+1;
   }
-  return val;  // end reached, nothing found, return default val.
+  return val;
 }
 
 
@@ -310,7 +280,7 @@ void ready() {
  * First thing this machine does on startup.  Runs only once.
  */
 void setup() {
-  Serial.begin(BAUD);  // open coms
+  Serial.begin(BAUD);
 
   pinMode(step_pin_x, OUTPUT);
   pinMode(dir_pin_x, OUTPUT);
@@ -318,9 +288,8 @@ void setup() {
   pinMode(dir_pin_y, OUTPUT);
 
   // position(0,0);  // set staring position... add this in when we have limiters
-  // feedrate((MAX_FEEDRATE + MIN_FEEDRATE)/2);  // not sure what this even does
 
-  help();  // say hello
+  help();
   ready();
 }
 
@@ -329,16 +298,14 @@ void setup() {
  * After setup() this machine will repeat loop() forever.
  */
 void loop() {
-  // listen for serial commands
-  while(Serial.available() > 0) {  // if something is available
-    char c=Serial.read();  // get it
-    Serial.print(c);  // repeat it back so I know you got the message
-    if(sofar<MAX_BUF-1) buffer[sofar++]=c;  // store it
+  while(Serial.available() > 0) {
+    char c=Serial.read();
+    Serial.print(c); 
+    if(sofar<MAX_BUF-1) buffer[sofar++]=c;
     if((c=='\n') || (c == '\r')) {
-      // entire message received
-      buffer[sofar]=0;  // end the buffer so string functions work right
-      Serial.print(F("\r\n"));  // echo a return character for humans
-      processCommand();  // do something with the command
+      buffer[sofar]=0;
+      Serial.print(F("\r\n"));
+      processCommand();
       ready();
     }
   }
