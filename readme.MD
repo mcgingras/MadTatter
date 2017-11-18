@@ -1,7 +1,7 @@
 <h1 align="center">The Mad Tatter</h1>
 
 <div align="center">
-<img src="app/static/t20.svg" />
+<img src="app/static/t20.svg" width="50%" />
 </div>
 
 <div align="center">
