@@ -1,7 +1,7 @@
 <h1 align="center">The Mad Tatter</h1>
 
 <div align="center">
-<img src="app/static/t20.svg" width="50%" />
+<img src="app/static/t20.svg" width="40%" />
 </div>
 
 <div align="center">
@@ -15,7 +15,7 @@
 
 <div align="center">
   <sub>An INFO 4320 project @ Cornell University. Built by
-  <a href="https://github.com/mcgingras">Michael Gingras</a>
+  <a href="https://github.com/mcgingras">Michael Gingras,</a>
   <a href="#">Andrew Grossfeld</a> and
   <a href="#">Anna Kamphampaty</a>
 </div>
