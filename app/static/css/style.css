@@ -1,23 +1,6 @@
-#sketch {
-  background: #ddd;
-  font: 10px sans-serif;
-  cursor: url('/static/img/crayon.png'), auto;
-}
-
-.line {
-  cursor: url('/static/img/crayon.png'), auto;
-  fill: none;
-  stroke: #000;
-  stroke-width: 4px;
-  stroke-linejoin: round;
-}
-#output {
-  position: relative;
-  top: -2em;
-  left: 0.67em;
-  font: 12px/1.4 monospace;
-}
-
+/************************************************************************/
+/****************************** Defaults ********************************/
+/************************************************************************/
 
 *{
   margin: 0;
@@ -39,6 +22,21 @@ a:hover{
   color: #777777;
 }
 
+.bold{ font-weight: 700; }
+.font-lg{ font-size: 42px; }
+.font-sm{ font-size: 14px; }
+
+.marquee{
+  background-color: white;
+  padding: 15px;
+  font-size: 36px;
+  flex: 0 1 auto;
+}
+
+/************************************************************************/
+/***************************** Flex + Misc ******************************/
+/************************************************************************/
+
 .flex{
   display: flex;
 }
@@ -49,15 +47,14 @@ a:hover{
   height: 100%;
 }
 
-
 .flex-v > div{
   display: flex;
   flex: 1;
 }
 
-.bold{ font-weight: 700; }
-.font-lg{ font-size: 42px; }
-.font-sm{ font-size: 14px; }
+.flex-c{
+ flex-direction: column;
+}
 
 .row1-4{
   width: 25%;
@@ -80,30 +77,13 @@ a:hover{
   word-wrap: break-word;
 }
 
-.flex-c{
- flex-direction: column;
-}
-
 .logo{
   margin: 35px;
 }
 
-.marquee{
-  background-color: white;
-  padding: 15px;
-  font-size: 36px;
-  flex: 0 1 auto;
-}
-
-.axis{
-  stroke-width: 4px;
-}
-
-.plot{
-  position: absolute;
-  top: 0;
-  left: 0;
-}
+/************************************************************************/
+/***************************** LIVE VIEW ********************************/
+/************************************************************************/
 
 .player{
   height: 100%;
@@ -117,3 +97,61 @@ a:hover{
 }
 
 .not-live{ text-decoration: line-through; }
+
+/************************************************************************/
+/************************** Image container *****************************/
+/************************************************************************/
+
+
+.image-container{
+  position: relative;
+}
+
+.image-container:hover{
+  cursor: pointer;
+}
+
+.image-container img{
+  margin-top: 50px;
+}
+
+.image-container .title{
+  position: absolute;
+  top: 0;
+  font-size: 18px;
+}
+
+/************************************************************************/
+/************************** SVG Sketchbook ******************************/
+/************************************************************************/
+
+#sketch {
+  background: #ddd;
+  font: 10px sans-serif;
+  cursor: url('/static/img/crayon.png'), auto;
+}
+
+#output {
+  position: relative;
+  top: -2em;
+  left: 0.67em;
+  font: 12px/1.4 monospace;
+}
+
+.line {
+  cursor: url('/static/img/crayon.png'), auto;
+  fill: none;
+  stroke: #000;
+  stroke-width: 4px;
+  stroke-linejoin: round;
+}
+
+.axis{
+  stroke-width: 4px;
+}
+
+.plot{
+  position: absolute;
+  top: 0;
+  left: 0;
+}
