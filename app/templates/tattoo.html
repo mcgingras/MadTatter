@@ -13,7 +13,10 @@
         </div>
         <div class="row1-4 flex flex-c border" style="border-left: none;">
           <label for="file">Import SVG</label>
-          <input type="file">
+          <form action = "http://localhost:5000/uploader" method = "POST" enctype = "multipart/form-data">
+           <input type = "file" name = "file" />
+           <input type = "submit"/>
+          </form>
         </div>
       </div>
     </div>
