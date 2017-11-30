@@ -41,8 +41,8 @@ float px, py;           // location
 int LIFT_AMOUNT = 1000;   // how high to lift z on G00 rapid movement mode
 
 float fr           =  0;
-int MM_PER_SEGMENT =  1;
-long  step_delay   = 10;
+int MM_PER_SEGMENT =  50;
+long  step_delay   =  10;
 const int delay_between_steps_microsec = 10000;
 
 // settings
@@ -372,10 +372,10 @@ void processCommand() {
   int cmd = parseNumber('G',-1);
   switch(cmd) {
   case  0: {
-    for (size_t i = 0; i < LIFT_AMOUNT; i++) { zmstep(-1); }
+    for (size_t i = 0; i < LIFT_AMOUNT; i++) { zmstep(1); }
     line( parseNumber('X',(mode_abs?px:0)) + (mode_abs?0:px),
           parseNumber('Y',(mode_abs?py:0)) + (mode_abs?0:py) );
-    for (size_t i = 0; i < LIFT_AMOUNT; i++) { zmstep(1); }
+    for (size_t i = 0; i < LIFT_AMOUNT; i++) { zmstep(-1); }
     break;
     }
   case  1: { // line
@@ -444,7 +444,7 @@ void setup() {
 
   position(0,0);  // set staring position... add this in when we have limiters
 
-  home();  // limit switches
+  // home();  // limit switches
   setZ();
   help();  // say hello
   ready();
