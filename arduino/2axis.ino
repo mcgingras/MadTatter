@@ -39,8 +39,8 @@
 char  buffer[MAX_BUF];  // where we store the message until we get a newline
 int   sofar;            // how much is in the buffer
 float px, py;           // location
+int LIFT_AMOUNT = 100;   // how high to lift z on G00 rapid movement mode
 
-// speeds
 float fr =     0;       // human version
 long  step_delay = 10;       // machine version
 const int delay_between_steps_microsec = 10000;
@@ -54,9 +54,10 @@ const int step_pin_x = D1;
 const int dir_pin_x  = D0;
 const int step_pin_y = A1;
 const int dir_pin_y  = A0;
+const int step_pin_z = A3;
+const int dir_pin_z  = A2;
 const int lim_pin_x  = A2;
 const int lim_pin_y  = A3;
-
 
 //------------------------------------------------------------------------------
 // METHODS
@@ -118,6 +119,23 @@ void position(float npx,float npy) {
   px=npx;
   py=npy;
 }
+
+/**
+ * Steps the z axis motors
+ * can be used to lift and lower z axis
+ */
+void xmstep(int diry){
+  if(diry > 0){
+    digitalWrite(dir_pin_z, LOW);
+  }
+  else{
+    digitalWrite(dir_pin_z, HIGH);
+  }
+  digitalWrite(step_pin_z, HIGH);
+  digitalWrite(step_pin_z, LOW);
+  delayMicroseconds(delay_between_steps_microsec);
+}
+
 
 /**
  * Steps the x axis motors
@@ -316,7 +334,13 @@ void help() {
 void processCommand() {
   int cmd = parseNumber('G',-1);
   switch(cmd) {
-  case  0:
+  case  0: {
+    for (size_t i = 0; i < LIFT_AMOUNT; i++) { zmstep(-1); }
+    line( parseNumber('X',(mode_abs?px:0)) + (mode_abs?0:px),
+          parseNumber('Y',(mode_abs?py:0)) + (mode_abs?0:py) );
+    for (size_t i = 0; i < LIFT_AMOUNT; i++) { zmstep(1); }
+    break;
+    }
   case  1: { // line
     feedrate(parseNumber('F',fr));
     line( parseNumber('X',(mode_abs?px:0)) + (mode_abs?0:px),
