@@ -1,3 +1,7 @@
+var parentDiv = document.getElementById('parent');
+var width = parentDiv.clientWidth;
+var height = parentDiv.clientHeight;
+
 function gridData() {
   var data = new Array();
   var xpos = 1;
@@ -30,8 +34,8 @@ var gridData = gridData();
 
 var grid = d3.select("#plot")
   .append("svg")
-  .attr("width","100%")
-  .attr("height","100%");
+  .attr("width",width)
+  .attr("height",height);
 
 var row = grid.selectAll(".row")
   .data(gridData)
