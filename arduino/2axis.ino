@@ -6,12 +6,11 @@
 //
 // TODO:
 // - add limiters
-// - verify arc and line working
 // - z axis
 // - TCP protocol
 //------------------------------------------------------------------------------
 
-// ~~ Note: I've disabled all of the feedrate stuff bc I am not sure what it is.
+// ~~ Note: I've disabled all of the feedrate stuff.
 
 #include "math.h"
 
@@ -398,6 +397,8 @@ void setup() {
   pinMode(dir_pin_x, OUTPUT);
   pinMode(step_pin_y, OUTPUT);
   pinMode(dir_pin_y, OUTPUT);
+  pinMode(step_pin_z, OUTPUT);
+  pinMode(dir_pin_z, OUTPUT);
   pinMode(lim_pin_x, INPUT);
   pinMode(lim_pin_y, INPUT);
 
