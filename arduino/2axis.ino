@@ -38,25 +38,34 @@
 char  buffer[MAX_BUF];  // where we store the message until we get a newline
 int   sofar;            // how much is in the buffer
 float px, py;           // location
-int LIFT_AMOUNT = 100;   // how high to lift z on G00 rapid movement mode
+int LIFT_AMOUNT = 1000;   // how high to lift z on G00 rapid movement mode
 
-float fr =     0;       // human version
-long  step_delay = 10;       // machine version
+float fr           =  0;
+int MM_PER_SEGMENT =  1;
+long  step_delay   = 10;
 const int delay_between_steps_microsec = 10000;
-int MM_PER_SEGMENT = 1;
 
 // settings
 char mode_abs=1;        // absolute mode?
 
+// z_axis
+const int z_max = 3500;
+int z_plane;
+
+
+
 // pins
-const int step_pin_x = D1;
-const int dir_pin_x  = D0;
-const int step_pin_y = A1;
-const int dir_pin_y  = A0;
+const int step_pin_x = A1;
+const int dir_pin_x = A0;
+const int step_pin_y = D1;
+const int dir_pin_y = D0;
 const int step_pin_z = A3;
-const int dir_pin_z  = A2;
-const int lim_pin_x  = A2;
-const int lim_pin_y  = A3;
+const int dir_pin_z = A2;
+const int limit_x = D3;
+const int limit_y = D2;
+const int z_plane_pin = A4;
+const int r_pin = A5;
+const int g_pin = A6;
 
 //------------------------------------------------------------------------------
 // METHODS
@@ -64,10 +73,39 @@ const int lim_pin_y  = A3;
 
 
 void home(){
-  while(digitalRead(lim_pin_x) == LOW){
+  while(digitalRead(limit_y) == LOW){
     xmstep(-1);
   }
+  while(digitalRead(limit_x) == LOW){
+    ymstep(-1);
+  }
   position(0,0);
+}
+
+
+/**
+ * sets the z axis plane at the beggining
+ */
+void setZ(){
+    int btn = digitalRead(limit_x);
+    int new_z, diff;
+    int val = analogRead(z_plane_pin);
+    z_plane = map(val, 0, 4095, 0, z_max);
+
+    while(btn == LOW) {
+      val = analogRead(z_plane_pin);
+      new_z = map(val, 0, 4095, 0, z_max);
+      diff = new_z - z_plane;
+      z_plane = new_z;
+      if (diff > 10 || diff < -10) {
+        int dir = diff > 0 ? 1:-1;
+        for (size_t i = 0; i < abs(diff); i++) {
+          zmstep(dir);
+        }
+      }
+      btn = digitalRead(limit_x);
+      delay(200);
+    }
 }
 
 /**
@@ -123,8 +161,8 @@ void position(float npx,float npy) {
  * Steps the z axis motors
  * can be used to lift and lower z axis
  */
-void xmstep(int diry){
-  if(diry > 0){
+void zmstep(int dirz){
+  if(dirz > 0){
     digitalWrite(dir_pin_z, LOW);
   }
   else{
@@ -399,12 +437,15 @@ void setup() {
   pinMode(dir_pin_y, OUTPUT);
   pinMode(step_pin_z, OUTPUT);
   pinMode(dir_pin_z, OUTPUT);
-  pinMode(lim_pin_x, INPUT);
-  pinMode(lim_pin_y, INPUT);
+  pinMode(r_pin, OUTPUT);
+  pinMode(g_pin, OUTPUT);
+  pinMode(limit_x, INPUT);
+  pinMode(limit_y, INPUT);
 
   position(0,0);  // set staring position... add this in when we have limiters
 
-  home();
+  home();  // limit switches
+  setZ();
   help();  // say hello
   ready();
 }
