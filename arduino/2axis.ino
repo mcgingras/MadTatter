@@ -66,6 +66,7 @@ const int limit_y = D2;
 const int z_plane_pin = A4;
 const int r_pin = A5;
 const int g_pin = A6;
+const int joystick_pin = A4;
 
 //------------------------------------------------------------------------------
 // METHODS
@@ -87,25 +88,29 @@ void home(){
  * sets the z axis plane at the beggining
  */
 void setZ(){
+    int STEP_AMT = 100;
     int btn = digitalRead(limit_x);
     int new_z, diff;
     int val = analogRead(z_plane_pin);
     z_plane = map(val, 0, 4095, 0, z_max);
 
     while(btn == LOW) {
-      val = analogRead(z_plane_pin);
-      new_z = map(val, 0, 4095, 0, z_max);
-      diff = new_z - z_plane;
-      z_plane = new_z;
-      if (diff > 10 || diff < -10) {
-        int dir = diff > 0 ? 1:-1;
-        for (size_t i = 0; i < abs(diff); i++) {
+      int joystick = analogRead(joystick_pin);
+      int diff = joystick - 2920;
+      int dir;
+      if(abs(diff) > 100 and z_plane < z_max and z_plane > 0){
+        if (diff > 100) { dir = -1; }
+        else if (diff < -100) { dir = 1; }
+        for (size_t i = 0; i < STEP_AMT; i++) {
           zmstep(dir);
         }
+        z_plane += dir;
       }
+
       btn = digitalRead(limit_x);
-      delay(200);
+      delay(100);
     }
+
 }
 
 /**
@@ -441,6 +446,7 @@ void setup() {
   pinMode(g_pin, OUTPUT);
   pinMode(limit_x, INPUT);
   pinMode(limit_y, INPUT);
+  pinMode(joystick_pin, INPUT);
 
   position(0,0);  // set staring position... add this in when we have limiters
 
